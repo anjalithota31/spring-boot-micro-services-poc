@@ -1,0 +1,99 @@
+name: Fireflink Test Execution
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fireflink-execution:
+    name: Execute FireFlink Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger FireFlink Execution
+        shell: bash
+        env:
+          FIREFLINK_ACCESS_TOKEN: ${{ secrets.FIREFLINK_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$FIREFLINK_ACCESS_TOKEN" ]; then
+            echo "Error: FIREFLINK_ACCESS_TOKEN secret is missing."
+            exit 1
+          fi
+
+          echo "Sending execution request to FireFlink..."
+
+          curl --location --fail-with-body --show-error \
+            --request POST \
+            'https://us-app.fireflink.com/dashboardexecution/optimize/v3/public/cicd/default-machine' \
+            --header 'Content-Type: application/json' \
+            --header 'version: phase_1' \
+            --data-raw "$(cat <<JSON
+          {
+            "suiteId": "SUITE_e65f646b-65a2-4563-92c9-34e2011a59a5",
+            "waitConfig": {
+              "captureScreenshots": "notCapture",
+              "captureVideos": "notCapture",
+              "delayBetweenSteps": "5",
+              "delayBetweenStepsUnit": "Seconds",
+              "explicitWait": "15",
+              "explicitWaitUnit": "Seconds",
+              "implicitWait": "15",
+              "implicitWaitUnit": "Seconds",
+              "terminateScriptIfTakesMoreTime": "4",
+              "terminateScriptUnit": "Minutes",
+              "terminateSuiteIfTakesMoreTime": "5",
+              "terminateSuiteUnit": "Hours"
+            },
+            "customMachineDetails": [
+              {
+                "clientId": "flinko-client-win-efc95bd5-bbc0-f899-b448-26d274f2e056",
+                "machineInstances": [
+                  {
+                    "executionEnv": "Local",
+                    "browserName": "Google Chrome",
+                    "browserVersion": "154.0.8037.98",
+                    "deviceInfo": [
+                      {
+                        "version": "14",
+                        "name": "m13ins",
+                        "type": "local",
+                        "subType": "device",
+                        "platform": "android",
+                        "appId": "",
+                        "appName": "",
+                        "serial_no": "RZ8TB064PPN",
+                        "deviceUniqueId": "RZ8TB064PPN",
+                        "available": ""
+                      }
+                    ],
+                    "runDetails": [
+                      {
+                        "peVariableSetId": "SUITE_VAR_SETebe4cac0-17d9-415a-a240-89e7b9524ba8",
+                        "globalVariableSetId": "SUITE_VAR_SET46c4d94a-a955-4f3c-a6b3-d95256fda2cd",
+                        "testDataSetId": "TDS8d80a30b-e710-41db-92ca-3c9ee93cc819"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "licenseId": "LIC1026654",
+            "accessToken": "$FIREFLINK_ACCESS_TOKEN",
+            "projectId": "PJT1063",
+            "executionDataSet": {
+              "peVariableSetId": "SUITE_VAR_SETebe4cac0-17d9-415a-a240-89e7b9524ba8",
+              "globalVariableSetId": "SUITE_VAR_SET46c4d94a-a955-4f3c-a6b3-d95256fda2cd",
+              "testDataSetId": "TDS8d80a30b-e710-41db-92ca-3c9ee93cc819"
+            }
+          }
+          JSON
+          )"
+
+          echo "FireFlink API request completed successfully."
